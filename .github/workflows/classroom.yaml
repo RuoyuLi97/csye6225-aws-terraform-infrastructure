@@ -1,0 +1,126 @@
+name: Autograding Tests
+
+on:
+  workflow_dispatch:
+# on:
+#   push:
+#     branches:
+#       - main
+
+permissions:
+  checks: write
+  actions: read
+  contents: read
+
+jobs:
+  assignment-grader:
+    runs-on: ubuntu-latest
+    environment:
+      name: AWS_DEPLOYMENT
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Start Grading
+        run: echo "==== Start Grading ===="
+      
+      - name: Configure AWS Credentialsg
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-west-2
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: latest
+
+      - name: Disable Terraform Debug
+        run: |
+          echo "TF_LOG=ERROR" >> $GITHUB_ENV
+
+      - name: Terraform Init
+        run: terraform init
+
+      - name: Terraform Check Format
+        run: terraform fmt -check -recursive
+
+      - name: Terraform Validate
+        run: terraform validate
+      
+      # Put all the github secrets and variables into terraform.vars
+      - name: Set Terraform Variables
+        run: |
+          touch terraform.tfvars
+          echo "webapp_ami_id = \"${{ vars.WEBAPP_AMI_ID }}\"" >> terraform.tfvars
+          echo "mysql_ami_id = \"${{ vars.MYSQL_AMI_ID }}\"" >> terraform.tfvars
+          echo "database_username = \"${{ vars.DATABASE_USERNAME }}\"" >> terraform.tfvars
+          echo "database_password = \"${{ secrets.DATABASE_PASSWORD }}\"" >> terraform.tfvars
+          echo "webapp_secret_key = \"${{ secrets.WEBAPP_SECRET_KEY }}\"" >> terraform.tfvars
+
+          cat terraform.tfvars
+
+      - name: Terraform Plan
+        run: terraform plan
+
+      - name: Terraform Apply
+        run: terraform apply -auto-approve
+
+      # - name: Terraform Output
+      #   run: |
+      #     WEBAPP_PUBLIC_IP=$(terraform output -raw webapp_public_ip_1)
+      #     echo "WEBAPP_PUBLIC_IP=$WEBAPP_PUBLIC_IP" >> $GITHUB_ENV
+      #     echo "WEBAPP_PUBLIC_IP=$WEBAPP_PUBLIC_IP" > webapp_public_ip.txt
+      #     echo "WEBAPP_PUBLIC_IP=$WEBAPP_PUBLIC_IP"
+      
+      # - name: Upload WEBAPP_PUBLIC_IP Variables
+      #   uses: actions/upload-artifact@v4
+      #   with:
+      #     name: webapp_public_ip
+      #     path: webapp_public_ip.txt
+      
+      # - name: Set up JDK 21
+      #   uses: actions/setup-java@v4
+      #   with: 
+      #     distribution: 'temurin'
+      #     java-version: '21'
+      
+      # - name: Build with Maven
+      #   run: |
+      #     mvn clean install -DskipTests
+      
+      # - name: Run API Tests for Health Check
+      #   run: |
+      #     export BASE_URL="http://${{env.WEBAPP_PUBLIC_IP}}"
+      #     mvn -Dtest=HealthCheckTest clean test
+      
+      # - name: Run API Tests for Register Endpoint
+      #   run: |
+      #     export BASE_URL="http://${{env.WEBAPP_PUBLIC_IP}}"
+      #     mvn -Dtest=RegisterTest clean test
+      
+      # - name: Run API Tests for Login Endpoint
+      #   run: |
+      #     export BASE_URL="http://${{env.WEBAPP_PUBLIC_IP}}"
+      #     mvn -Dtest=LoginTest clean test
+      
+      # - name: Run API Tests for Movie Endpoint
+      #   run: |
+      #     export BASE_URL="http://${{env.WEBAPP_PUBLIC_IP}}"
+      #     mvn -Dtest=MovieTest clean test
+
+      # - name: Run API Tests for Rating Endpoint
+      #   run: |
+      #     export BASE_URL="http://${{env.WEBAPP_PUBLIC_IP}}"
+      #     mvn -Dtest=RatingTest clean test
+
+      # - name: Run API Tests for Link Endpoint
+      #   run: |
+      #     export BASE_URL="http://${{env.WEBAPP_PUBLIC_IP}}"
+      #     mvn -Dtest=LinkTest clean test
+
+      # - name: Terraform Destroy
+      #   if: success()
+      #   continue-on-error: true
+      #   run: terraform destroy -auto-approve

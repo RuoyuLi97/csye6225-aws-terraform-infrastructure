@@ -1,0 +1,74 @@
+name: Integration Tests
+
+on:
+  workflow_dispatch:
+
+jobs:
+  integration-test:
+    runs-on: ubuntu-latest
+    environment: AWS_DEPLOYMENT
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+      
+      - name: Set up Java JDK 21
+        uses: actions/setup-java@v3
+        with:
+          java-version: '21'
+
+      - name: Download WEBAPP_PUBLIC_IP
+        uses: actions/download-artifact@v4
+        with:
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          name: webapp_public_ip
+      
+      - name: Read Web App Public IP
+        run: |
+          WEBAPP_PUBLIC_IP=$(cat webapp_public_ip.txt)
+          echo "WEBAPP_PUBLIC_IP=$WEBAPP_PUBLIC_IP" >> $GITHUB_ENV
+
+      - name: Verify WEBAPP_PUBLIC_IP
+        run: |
+          echo "Running integration tests against: http://${{env.WEBAPP_PUBLIC_IP}}"
+
+      - name: Set Up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Build with Maven
+        run: |
+          mvn clean install -DskipTests
+      
+      - name: Run API Tests for Health Check
+        run: |
+          export BASE_URL="http://${{env.WEBAPP_PUBLIC_IP}}"
+          mvn -Dtest=HealthCheckTest clean test
+      
+      - name: Run API Tests for Register Endpoint
+        run: |
+          export BASE_URL="http://${{env.WEBAPP_PUBLIC_IP}}"
+          mvn -Dtest=RegisterTest clean test
+      
+      - name: Run API Tests for Login Endpoint
+        run: |
+          export BASE_URL="http://${{env.WEBAPP_PUBLIC_IP}}"
+          mvn -Dtest=LoginTest clean test
+      
+      - name: Run API Tests for Movie Endpoint
+        run: |
+          export BASE_URL="http://${{env.WEBAPP_PUBLIC_IP}}"
+          mvn -Dtest=MovieTest clean test
+
+      - name: Run API Tests for Rating Endpoint
+        run: |
+          export BASE_URL="http://${{env.WEBAPP_PUBLIC_IP}}"
+          mvn -Dtest=RatingTest clean test
+
+      - name: Run API Tests for Link Endpoint
+        run: |
+          export BASE_URL="http://${{env.WEBAPP_PUBLIC_IP}}"
+          mvn -Dtest=LinkTest clean test

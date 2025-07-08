@@ -1,0 +1,29 @@
+# env file
+.env
+
+# vscode 
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+!.vscode/*.code-snippets
+
+# log files
+*.log
+
+# target directory (build artifacts)
+/target/
+
+# temp files
+*.tmp
+*.swp
+.DS_Store
+
+#terraform files
+.terraform/*
+.terraform.lock.hcl
+
+# dns and loadbalancing files
+assignment7-dns.txt
+assignment10-loadbalancing.txt
