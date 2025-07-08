@@ -39,13 +39,24 @@ Terraform Infrastructure as Code for deploying a scalable movie ratings API plat
 
 ### Required Secrets & Variables
 ```yaml
-# Secrets
-AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY
-DATABASE_PASSWORD, EC2_SSH_KEY, WEBAPP_SECRET_KEY
+# Secrets (must be configured in GitHub repository settings)
+AWS_ACCESS_KEY_ID: Valid AWS access key for deployment
+AWS_SECRET_ACCESS_KEY: Valid AWS secret key for deployment  
+DATABASE_PASSWORD: MySQL database password
+EC2_SSH_KEY: Private SSH key for EC2 instance access
+WEBAPP_SECRET_KEY: Application secret key for JWT tokens
 
-# Variables  
-DATABASE_USERNAME, MYSQL_AMI_ID, WEBAPP_AMI_ID
+# Variables (must be configured in GitHub repository settings)
+DATABASE_USERNAME: MySQL database username
+MYSQL_AMI_ID: Valid custom MySQL AMI identifier
+WEBAPP_AMI_ID: Valid custom webapp AMI identifier
 ```
+
+**⚠️ Important Note**: All secrets and variables in this repository contain placeholder/invalid values for security purposes. To run this infrastructure, you must:
+1. Configure valid AWS credentials with appropriate permissions
+2. Build custom AMIs using the companion [Packer repository](https://github.com/RuoyuLi97/csye6225-aws-movie-api-ami-builder)
+3. Update all GitHub repository secrets and variables with actual values
+4. Ensure AWS account has sufficient permissions for VPC, EC2, and Load Balancer operations
 
 ## File Structure
 ```
@@ -57,10 +68,10 @@ DATABASE_USERNAME, MYSQL_AMI_ID, WEBAPP_AMI_ID
 │   ├── classroom.yaml               # Autograding and deployment workflow
 │   └── integration_tests.yaml       # Integration testing workflow
 ├── scripts/                         # Deployment automation scripts
-│   ├── setup_webapp.sh             # Webapp initialization script
-│   ├── setup_mysql_ebs.sh          # EBS volume setup script
+│   ├── setup_webapp.sh              # Webapp initialization script
+│   ├── setup_mysql_ebs.sh           # EBS volume setup script
 │   ├── update_mysql_bind_address.sh # MySQL network configuration
-│   └── setup_database.sh           # Database initialization script
+│   └── setup_database.sh            # Database initialization script
 ├── src/test/java/com/example/       # Java integration test suite
 │   ├── HealthCheckTest.java         # Health check endpoint tests
 │   ├── LinkTest.java                # Link API endpoint tests
@@ -83,7 +94,13 @@ Tests run against live infrastructure with dynamically configured base URLs.
 ## Deployment Instructions
 
 ### Automated Deployment (Recommended)
-1. Configure GitHub repository secrets and variables
+**Prerequisites**: 
+- Valid AWS credentials configured in GitHub secrets
+- Custom AMIs built using companion Packer repository
+- All repository secrets and variables updated with actual values (current values are placeholders)
+
+Steps:
+1. Configure GitHub repository secrets and variables with valid values
 2. Trigger workflow via GitHub Actions "Run workflow" button
 3. Infrastructure automatically validates, provisions, and tests
 
